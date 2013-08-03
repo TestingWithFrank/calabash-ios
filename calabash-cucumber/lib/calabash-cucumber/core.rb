@@ -18,7 +18,12 @@ module Calabash
       end
 
       def query(uiquery, *args)
-        map(uiquery, :query, *args)
+
+        if !!ENV['CALABASH_WITH_FRANK']
+          calabash_map(uiquery, :query, *args)
+        else
+          map(uiquery, :query, *args)
+        end
       end
 
       def server_version
@@ -427,12 +432,20 @@ EOF
         end
       end
 
-      def map(query, method_name, *method_args)
+      def map( *args )
+        abstract_map( "map", *args )
+      end
+
+      def calabash_map( *args )
+        abstract_map( "calabash/map", *args )
+      end
+
+      def abstract_map(map_endpoint, query, method_name, *method_args)
         operation_map = {
             :method_name => method_name,
             :arguments => method_args
         }
-        res = http({:method => :post, :path => 'map'},
+        res = http({:method => :post, :path => map_endpoint},
                    {:query => query, :selector_engine => "calabash_uispec",
                     :operation => operation_map})
         res = JSON.parse(res)
@@ -442,7 +455,6 @@ EOF
 
         res['results']
       end
-
 
       def start_app_in_background(path=nil, sdk = nil, version = 'iphone', args = nil)
 
