@@ -338,14 +338,16 @@ EOF
       def playback(recording, options={})
         data = load_playback_data(recording)
 
-        post_data = %Q|{"events":"#{data}"|
-        post_data<< %Q|,"query":"#{escape_quotes(options[:query])}"| if options[:query]
-        post_data<< %Q|,"offset":#{options[:offset].to_json}| if options[:offset]
-        post_data<< %Q|,"reverse":#{options[:reverse]}| if options[:reverse]
-        post_data<< %Q|,"prototype":"#{options[:prototype]}"| if options[:prototype]
-        post_data << "}"
+        payload = { 
+          "events" => data
+        }
 
-        res = http({:method => :post, :raw => true, :path => 'play'}, post_data)
+        payload["query"] = escape_quotes(options[:query]) if options.key?(:query)
+        payload["offset"] = options[:offset] if options.key?(:offset)
+        payload["reverse"] = options[:reverse] if options.key?(:reverse)
+        payload["prototype"] = options[:prototype] if options.key?(:prototype)
+
+        res = http({:method => :post, :raw => true, :path => 'play'}, payload.to_json)
 
         res = JSON.parse(res)
         if res['outcome'] != 'SUCCESS'
